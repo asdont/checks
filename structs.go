@@ -56,8 +56,8 @@ func typesHandling(i int, v reflect.Value, vType reflect.Type, ignoreRawTypes bo
 
 	default:
 		if !ignoreRawTypes {
-			return fmt.Errorf("this type <%s {%s}>: %w",
-				vType.Field(i).Name, vType.Field(i).Tag, errors.New("this type is not handled"))
+			return fmt.Errorf("this type <%s {%s}>: type not supported",
+				vType.Field(i).Name, vType.Field(i).Tag)
 		}
 	}
 
