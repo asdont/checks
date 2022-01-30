@@ -8,17 +8,15 @@ import (
 	"reflect"
 )
 
-var ErrNotHandled = errors.New("this type is not handled")
-
 // StructureFields recursively traverses the structure and checks that:
 // - field values are not equal to an empty string or zero
 // - slices and arrays are not empty.
-func StructureFields(s interface{}) error {
+func StructureFields(s interface{}, ignoreRawTypes bool) error {
 	v := reflect.ValueOf(s)
 	vType := v.Type()
 
 	for i := 0; i < v.NumField(); i++ {
-		if err := typesHandling(i, v, vType); err != nil {
+		if err := typesHandling(i, v, vType, ignoreRawTypes); err != nil {
 			return err
 		}
 	}
@@ -26,10 +24,10 @@ func StructureFields(s interface{}) error {
 	return nil
 }
 
-func typesHandling(i int, v reflect.Value, vType reflect.Type) error {
+func typesHandling(i int, v reflect.Value, vType reflect.Type, ignoreRawTypes bool) error {
 	switch v := reflect.ValueOf(v.Field(i).Interface()); v.Kind() {
 	case reflect.Struct:
-		if err := StructureFields(v.Interface()); err != nil {
+		if err := StructureFields(v.Interface(), ignoreRawTypes); err != nil {
 			return err
 		}
 
@@ -57,8 +55,10 @@ func typesHandling(i int, v reflect.Value, vType reflect.Type) error {
 		break
 
 	default:
-		return fmt.Errorf("this type <%s {%s}>: %w",
-			vType.Field(i).Name, vType.Field(i).Tag, ErrNotHandled)
+		if !ignoreRawTypes {
+			return fmt.Errorf("this type <%s {%s}>: %w",
+				vType.Field(i).Name, vType.Field(i).Tag, errors.New("this type is not handled"))
+		}
 	}
 
 	return nil
