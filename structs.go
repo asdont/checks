@@ -5,14 +5,14 @@ package checks
 import (
 	"errors"
 	"fmt"
-	"reflect"
+	r "reflect"
 )
 
 // StructureFields recursively traverses the structure and checks that:
 // - field values are not equal to an empty string or zero
 // - slices and arrays are not empty.
 func StructureFields(s interface{}, ignoreRawTypes bool) error {
-	v := reflect.ValueOf(s)
+	v := r.ValueOf(s)
 	vType := v.Type()
 
 	for i := 0; i < v.NumField(); i++ {
@@ -24,34 +24,39 @@ func StructureFields(s interface{}, ignoreRawTypes bool) error {
 	return nil
 }
 
-func typesHandling(i int, v reflect.Value, vType reflect.Type, ignoreRawTypes bool) error {
-	switch v := reflect.ValueOf(v.Field(i).Interface()); v.Kind() {
-	case reflect.Struct:
+func typesHandling(i int, v r.Value, vType r.Type, ignoreRawTypes bool) error {
+	switch v := r.ValueOf(v.Field(i).Interface()); v.Kind() {
+	case r.Struct:
 		if err := StructureFields(v.Interface(), ignoreRawTypes); err != nil {
 			return err
 		}
 
-	case reflect.String:
+	case r.String:
 		if v.String() == "" {
 			return fmt.Errorf("field: %s {%s} = \"\"", vType.Field(i).Name, vType.Field(i).Tag)
 		}
 
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+	case r.Int, r.Int8, r.Int16, r.Int32, r.Int64:
 		if v.Int() == 0 {
 			return fmt.Errorf("field: %s {%s} = %d", vType.Field(i).Name, vType.Field(i).Tag, v.Int())
 		}
 
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+	case r.Uint, r.Uint8, r.Uint16, r.Uint32, r.Uint64:
 		if v.Uint() == 0 {
 			return fmt.Errorf("field: %s {%s} = %d", vType.Field(i).Name, vType.Field(i).Tag, v.Uint())
 		}
 
-	case reflect.Slice, reflect.Array:
+	case r.Float32, r.Float64:
+		if v.Float() == 0 {
+			return fmt.Errorf("field: %s {%s} = %d", vType.Field(i).Name, vType.Field(i).Tag, v.Float())
+		}
+
+	case r.Slice, r.Array:
 		if err := checkFieldsLists(v); err != nil {
 			return fmt.Errorf("field: %s {%s}: %w", vType.Field(i).Name, vType.Field(i).Tag, err)
 		}
 
-	case reflect.Bool:
+	case r.Bool:
 		break
 
 	default:
@@ -64,7 +69,7 @@ func typesHandling(i int, v reflect.Value, vType reflect.Type, ignoreRawTypes bo
 	return nil
 }
 
-func checkFieldsLists(rv reflect.Value) error {
+func checkFieldsLists(rv r.Value) error {
 	if rv.Len() == 0 {
 		return errors.New("list is empty")
 	}
