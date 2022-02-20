@@ -8,6 +8,13 @@ import (
 	r "reflect"
 )
 
+var (
+	ErrType        = errors.New("type not supported")
+	ErrListEmpty   = errors.New("list is empty")
+	ErrStringEmpty = errors.New("string is empty")
+	ErrNumZero     = errors.New("number is zero")
+)
+
 // StructureFields recursively traverses the structure and checks that:
 // - field values are not equal to an empty string or zero
 // - slices and arrays are not empty.
@@ -48,7 +55,7 @@ func typesHandling(i int, v r.Value, vType r.Type, ignoreRawTypes bool) error {
 
 	case r.Float32, r.Float64:
 		if v.Float() == 0 {
-			return fmt.Errorf("field: %s {%s} = %d", vType.Field(i).Name, vType.Field(i).Tag, v.Float())
+			return fmt.Errorf("field: %s {%s} = %f", vType.Field(i).Name, vType.Field(i).Tag, v.Float())
 		}
 
 	case r.Slice, r.Array:
@@ -61,8 +68,7 @@ func typesHandling(i int, v r.Value, vType r.Type, ignoreRawTypes bool) error {
 
 	default:
 		if !ignoreRawTypes {
-			return fmt.Errorf("this type <%s {%s}>: type not supported",
-				vType.Field(i).Name, vType.Field(i).Tag)
+			return fmt.Errorf("this type <%s {%s}>: %w", vType.Field(i).Name, vType.Field(i).Tag, ErrType)
 		}
 	}
 
@@ -71,16 +77,16 @@ func typesHandling(i int, v r.Value, vType r.Type, ignoreRawTypes bool) error {
 
 func checkFieldsLists(rv r.Value) error {
 	if rv.Len() == 0 {
-		return errors.New("list is empty")
+		return ErrListEmpty
 	}
 
 	for i := 0; i < rv.Len(); i++ {
 		if rv.Index(i).Interface() == "" {
-			return fmt.Errorf("%s", "\"\"")
+			return ErrStringEmpty
 		}
 
 		if rv.Index(i).Interface() == 0 {
-			return fmt.Errorf("%v", rv.Index(i).Interface())
+			return ErrNumZero
 		}
 	}
 
