@@ -9,10 +9,10 @@ import (
 )
 
 var (
-	ErrType        = errors.New("type not supported")
 	ErrListEmpty   = errors.New("list is empty")
-	ErrStringEmpty = errors.New("string is empty")
 	ErrNumZero     = errors.New("number is zero")
+	ErrStringEmpty = errors.New("string is empty")
+	ErrType        = errors.New("type not supported")
 )
 
 // StructureFields recursively traverses the structure and checks that:
